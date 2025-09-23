@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # --- Constants & Styles ---
-BASE_URL = "https://www.mxd05.cc/"
+BASE_URL = "https://mxd.okyxxs.com/"
 GALLERY = "/gallery/"
 RANKINGS = {"请选择排行榜": ""}
 TAGS = {"请选择标签": ""}
@@ -389,7 +389,7 @@ class WebScraper:
         try:
             session = WebScraper.get_session()
             response = session.get(BASE_URL, timeout=30)
-            soup = BeautifulSoup(cryptor.decrypt_html(response.text), 'html.parser')
+            soup = BeautifulSoup(response.text, 'html.parser')
 
             menus = soup.select('div.menu ul li')
             for menu in menus:
@@ -487,7 +487,7 @@ class SearchWorker(BaseWorker):
             if self.is_cancelled:
                 return self.error.emit("已取消")
 
-            items, pages = WebScraper.parse_search_results_page(cryptor.decrypt_html(response.text))
+            items, pages = WebScraper.parse_search_results_page(response.text)
             if not items:
                 return self.error.emit("没有找到结果。")
 
@@ -518,7 +518,7 @@ class PageFetchWorker(BaseWorker):
             if self.is_cancelled:
                 return
 
-            items, pages = WebScraper.parse_search_results_page(cryptor.decrypt_html(response.text))
+            items, pages = WebScraper.parse_search_results_page(response.text)
             self.results_ready.emit(items, pages)
         except Exception as e:
             if not self.is_cancelled:
@@ -546,7 +546,7 @@ class AllPagesFetchWorker(BaseWorker):
                 self.progress.emit(page, self.total_pages)
                 page_url = WebScraper.construct_page_url(self.base_url, page)
                 response = session.get(page_url, timeout=15)
-                items, _ = WebScraper.parse_search_results_page(cryptor.decrypt_html(response.text))
+                items, _ = WebScraper.parse_search_results_page(response.text)
                 all_items.extend(items)
                 time.sleep(0.1)  # Be polite to the server
 
@@ -590,7 +590,7 @@ class ThumbnailWorker(BaseWorker):
                 return
 
             response = session.get(self.url, timeout=10)
-            soup = BeautifulSoup(cryptor.decrypt_html(response.text), "html.parser")
+            soup = BeautifulSoup(response.text, "html.parser")
             tag = soup.select_one("div.gallerypic img")
             src = tag.get("src") if tag else None
 
@@ -693,7 +693,7 @@ class DownloadWorker(BaseWorker):
 
     def _get_image_urls(self) -> List[str]:
         response = self.session.get(self.url, timeout=10)
-        soup = BeautifulSoup(cryptor.decrypt_html(response.text), "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
         tag = soup.select_one("div.gallerypic img")
         src = tag.get("src") if tag else None
         if not src:
